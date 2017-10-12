@@ -22,7 +22,7 @@ exports.nutritionFacts = functions.https.onRequest((request, response) => {
 
         console.log('API Request: ' + host + path);
 
-        let {body: {result: {parameters: {food}}}} = request;
+        let {body: {result: {parameters: {food,quantity,unit}}}} = request;
         if (food) {
             rp('https://api.edamam.com/api/food-database/parser?app_id=1f42d8bb&app_key=8ca5e6822e9abfd927289b214749ae7d&ingr=' + food)
                 .then(function (response) {
@@ -42,8 +42,8 @@ exports.nutritionFacts = functions.https.onRequest((request, response) => {
                             body: {
                                 ingredients: [
                                     {
-                                        quantity: 1,
-                                        measureURI: 'http://www.edamam.com/ontologies/edamam.owl#Measure_pound',
+                                        quantity: quantity || 1,
+                                        measureURI: 'http://www.edamam.com/ontologies/edamam.owl#Measure_' + unit || 'pound',
                                         foodURI: uri
 
                                     }
@@ -51,6 +51,8 @@ exports.nutritionFacts = functions.https.onRequest((request, response) => {
                             },
                             json: true
                         };
+                        console.log('options', options);
+                        console.log('options body', options.body.ingredients);
                         rp(options)
                             .then(function (response) {
                                 const nutrients = response['totalNutrients'];
@@ -61,11 +63,12 @@ exports.nutritionFacts = functions.https.onRequest((request, response) => {
                                     nutrients_labels.forEach(function(label) {
                                         message += nutrients[label]['label'] + ' ' + nutrients[label]['quantity'].toFixed(2) + nutrients[label]['unit'] + '\n';
                                     });
+                                    console.log('message', message);
                                     app.ask(app.buildRichResponse()
-                                        .addSimpleResponse('Nutrition facts of one pound of ' + food + ' are as follows')
                                         .addSimpleResponse(message));
 
-                                    //app.ask(message);
+                                } else {
+                                    app.ask('sorry could not find, your search should be like one unit of egg or two liters of milk, etc');
                                 }
                             })
                             .catch(function (error) {
