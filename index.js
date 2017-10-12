@@ -23,6 +23,7 @@ exports.nutritionFacts = functions.https.onRequest((request, response) => {
         console.log('API Request: ' + host + path);
 
         let {body: {result: {parameters: {food,quantity,unit}}}} = request;
+        quantity = parseInt(quantity);
         if (food) {
             rp('https://api.edamam.com/api/food-database/parser?app_id=1f42d8bb&app_key=8ca5e6822e9abfd927289b214749ae7d&ingr=' + food)
                 .then(function (response) {
@@ -65,6 +66,7 @@ exports.nutritionFacts = functions.https.onRequest((request, response) => {
                                     });
                                     console.log('message', message);
                                     app.ask(app.buildRichResponse()
+                                        .addSimpleResponse('nutrition facts of ' + quantity + ' ' + unit + ' of ' + food + ' are as follows')
                                         .addSimpleResponse(message));
 
                                 } else {
